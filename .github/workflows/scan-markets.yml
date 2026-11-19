@@ -1,0 +1,19 @@
+name: Scan markets
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Load the project files
+        uses: actions/checkout@v4
+      - name: Scan all seven markets
+        env:
+          TWELVE_DATA_API_KEY: ${{ secrets.TWELVE_DATA_API_KEY }}
+        run: python3 scan_market.py
