@@ -84,8 +84,8 @@ def scan(symbol, hourly, five_minute, now, alert_events=None):
                   if qualifies(bos, results["Daily"][0], results["4H"][0])]
         events = [event for bos in setups
                   for event in replay(bos, bars[frame], bars[smaller])]
-                    if alert_events is not None:
-         alert_events.extend(events)
+        if alert_events is not None:
+            alert_events.extend(events)
         report[frame] = (len(bars[frame]), len(setups),
                          sum(event["id"][-1] == "return" for event in events))
     return report
