@@ -1,0 +1,55 @@
+name: Check price feed
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Check all seven markets
+        env:
+          TWELVE_DATA_API_KEY: ${{ secrets.TWELVE_DATA_API_KEY }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from urllib.parse import urlencode
+          from urllib.request import urlopen
+
+          symbols = ("EUR/USD", "USD/JPY", "AUD/USD", "GBP/USD",
+                     "USD/CAD", "EUR/GBP", "XAU/USD")
+          key = os.environ.get("TWELVE_DATA_API_KEY")
+          if not key:
+              raise SystemExit("GitHub could not find the Twelve Data secret.")
+
+          query = urlencode({
+              "symbol": ",".join(symbols),
+              "interval": "5min",
+              "outputsize": 1,
+              "timezone": "Asia/Kolkata",
+              "apikey": key,
+          })
+          try:
+              with urlopen("https://api.twelvedata.com/time_series?" + query,
+                           timeout=20) as response:
+                  data = json.load(response)
+          except (OSError, ValueError):
+              raise SystemExit("Could not read a response from Twelve Data.") from None
+
+          failures = 0
+          for symbol in symbols:
+              result = data.get(symbol, {})
+              candles = result.get("values", [])
+              if result.get("status") == "ok" and candles and candles[0].get("datetime"):
+                  print(f"{symbol} OK — {candles[0]['datetime']} India time")
+              else:
+                  code = result.get("code", data.get("code"))
+                  detail = f" (code {code})" if isinstance(code, int) else ""
+                  print(f"{symbol} — no candle returned{detail}")
+                  failures += 1
+          raise SystemExit(1 if failures else 0)
+          PY
