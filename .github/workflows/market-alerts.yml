@@ -1,0 +1,42 @@
+name: Market alerts
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: market-alerts
+  cancel-in-progress: false
+
+jobs:
+  alerts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - name: Load current project files
+        uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - name: Find new alerts
+        env:
+          TWELVE_DATA_API_KEY: ${{ secrets.TWELVE_DATA_API_KEY }}
+        run: python3 run_alerts.py prepare
+
+      - name: Save the alert record
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add alert-state.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Save market alert progress"
+            git push origin HEAD:main
+          fi
+
+      - name: Send new alerts to Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python3 run_alerts.py deliver
