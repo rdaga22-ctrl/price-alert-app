@@ -1,0 +1,59 @@
+name: Test Telegram alert
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Find your Telegram chat and send a test
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_LINK_CODE: ${{ secrets.TELEGRAM_LINK_CODE }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from urllib.request import Request, urlopen
+
+          token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+          code = os.environ.get("TELEGRAM_LINK_CODE", "").strip()
+          if not token or not code:
+              raise SystemExit("GitHub is missing the bot token or link code secret.")
+
+          def telegram(method, data):
+              request = Request(
+                  f"https://api.telegram.org/bot{token}/{method}",
+                  data=json.dumps(data).encode(),
+                  headers={"Content-Type": "application/json"},
+              )
+              try:
+                  with urlopen(request, timeout=20) as response:
+                      result = json.load(response)
+              except (OSError, ValueError):
+                  raise SystemExit(f"Telegram request failed: {method}.") from None
+              if not result.get("ok"):
+                  raise SystemExit(f"Telegram rejected the request: {method}.")
+              return result["result"]
+
+          chats = set()
+          for update in telegram("getUpdates", {"allowed_updates": ["message"]}):
+              message = update.get("message", {})
+              chat = message.get("chat", {})
+              if chat.get("type") == "private" and message.get("text", "").strip() == code:
+                  chats.add(chat["id"])
+
+          if len(chats) != 1:
+              raise SystemExit("Could not find exactly one private chat with the matching code.")
+
+          chat_id = chats.pop()
+          telegram("sendMessage", {
+              "chat_id": chat_id,
+              "text": f"Price Alert test passed! This is a test message.\nYour chat ID: {chat_id}",
+          })
+          print("Test alert sent. Check your Telegram chat.")
+          PY
