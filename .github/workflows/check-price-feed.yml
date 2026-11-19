@@ -53,3 +53,35 @@ jobs:
                   failures += 1
           raise SystemExit(1 if failures else 0)
           PY
+      - name: Send feed status to Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from urllib.request import Request, urlopen
+
+          token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+          chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
+          if not token or not chat_id.isdecimal():
+              raise SystemExit("Check the Telegram bot token and chat ID in GitHub secrets.")
+
+          request = Request(
+              f"https://api.telegram.org/bot{token}/sendMessage",
+              data=json.dumps({
+                  "chat_id": int(chat_id),
+                  "text": "Price Alert setup test: GitHub fetched 5-minute candles for all seven markets.",
+              }).encode(),
+              headers={"Content-Type": "application/json"},
+          )
+          try:
+              with urlopen(request, timeout=20) as response:
+                  result = json.load(response)
+          except (OSError, ValueError):
+              raise SystemExit("Telegram could not send the setup message.") from None
+          if not result.get("ok"):
+              raise SystemExit("Telegram rejected the setup message.")
+          print("Setup message sent to Telegram.")
+          PY
