@@ -1,5 +1,7 @@
 {
-  "checked": 29919537,
-  "queued": {},
+  "checked": 29919570,
+  "queued": {
+    "[\"USD/JPY\",\"1H\",29906580,true,\"return\"]": 29919550
+  },
   "started": 29918410
 }
