@@ -1,7 +1,5 @@
 {
-  "checked": 29923604,
-  "queued": {
-    "[\"EUR/GBP\",\"1H\",29920260,true,\"return\"]": 29923555
-  },
+  "checked": 29923647,
+  "queued": {},
   "started": 29918410
 }
