@@ -1,5 +1,7 @@
 {
-  "checked": 29925535,
-  "queued": {},
+  "checked": 29925602,
+  "queued": {
+    "[\"USD/CAD\",\"4H\",29916360,true,\"return\"]": 29925540
+  },
   "started": 29918410
 }
