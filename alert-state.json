@@ -1,5 +1,7 @@
 {
-  "checked": 29926914,
-  "queued": {},
+  "checked": 29926979,
+  "queued": {
+    "[\"XAU/USD\",\"4H\",29926920,false,\"bos\"]": 29926920
+  },
   "started": 29918410
 }
