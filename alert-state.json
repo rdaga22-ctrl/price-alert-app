@@ -1,5 +1,7 @@
 {
-  "checked": 29929675,
-  "queued": {},
+  "checked": 29929715,
+  "queued": {
+    "[\"AUD/USD\",\"4H\",29919960,false,\"return\"]": 29929710
+  },
   "started": 29918410
 }
